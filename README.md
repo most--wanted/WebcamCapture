@@ -1,6 +1,6 @@
 Description:
 WebcamDevicesCapture v0.1 - cross-platform project for capturing webcam devices list.
-So, the main ñlass - "devicemanager", which allows to get devices list using native api.
+So, the main class - "devicemanager", which allows to get devices list using native api.
 This program captures video from selected device using openCV.
 The MAC OS X support will be added soon.
 Currently project have been tested in Windows 7 (msvc12) and Ubuntu 12.04 (GCC).
