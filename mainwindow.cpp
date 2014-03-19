@@ -32,7 +32,7 @@ void MainWindow::on_pbUpdate_clicked()
 void MainWindow::on_pbCaptureVideo_clicked()
 {
     // current index of combo box - it is the cam index
-    CvCapture *capture = cvCreateCameraCapture(CV_CAP_ANY);
+    CvCapture *capture = cvCreateCameraCapture(this->ui->cbDevicesList->currentIndex());
     assert( capture );
 
     IplImage * frame = 0;
