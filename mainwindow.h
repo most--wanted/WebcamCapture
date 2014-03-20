@@ -26,6 +26,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    // <int, int> - combobox index, webcam index
+    std::map<int, int> camIndexesMap_;
 };
 
 #endif // MAINWINDOW_H

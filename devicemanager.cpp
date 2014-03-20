@@ -5,70 +5,69 @@ DeviceManager::DeviceManager()
 {
 }
 
-std::vector<std::string> DeviceManager::GetWebcamList()
+std::map<int, std::string> DeviceManager::GetWebcamList()
 {
-    std::vector<std::string> deviceList;
+    std::map<int, std::string> deviceList;
 #ifdef __linux__
-    int fd;
     struct v4l2_capability video_cap;
 
+    int fd;
     DIR *d;
     struct dirent *dir;
     d = opendir("/dev/");
 
-    // need to the normal code!!!!!!!!!!!!
     if (d)
     {
-        std::vector<std::string> sysDeviceNames;
-        //returns unsorted devices list. So we need to sort it. (video1, video0 ..etc)
+        //returns unsorted devices list(video1, video0 ..etc)
         while( (dir = readdir(d) ) != NULL )
         {
             // tamplate video0, video1 ... etc.
+            // strlen("video0") = 6
             if ( strlen(dir->d_name) < 6)
             {
                 continue;
             }
-            // 6 - length of "video" + "\0"
+            // strlen("video") + "\0" = 6
             char buf[6];
             memset(buf, 0, sizeof(buf));
             memcpy(buf, dir->d_name, 5);
             if (strcmp(buf, "video") == 0)
             {
-                sysDeviceNames.push_back(dir->d_name);
+                char camDevPath[MAX_CAM_NAME_LENGTH];
+                memset(camDevPath, 0, sizeof(camDevPath));
+                sprintf(camDevPath, "%s%s", "/dev/", dir->d_name);
+
+                if((fd = open(camDevPath, O_RDONLY)) == -1)
+                {
+                    break;
+                }
+
+                //parse the index of the cam
+                char camIndexChar[4]; // max value 999 + \0
+                char * end;
+                memset(camIndexChar, 0, sizeof(camIndexChar));
+                strcpy(camIndexChar, dir->d_name+5);
+
+                int camIndexInt = strtol(camIndexChar, &end, 10);
+                //if no characters were converted to the int (incorrect name for example: videoAB)
+                if ( end == camIndexChar )
+                {
+                    camIndexInt = -1;
+                }
+
+                if(ioctl(fd, VIDIOC_QUERYCAP, &video_cap) == -1)
+                {
+                    deviceList.insert(std::pair<int, std::string>(camIndexInt,"Unknown camera"));
+                }
+                else
+                {
+                    //i need to convert from addres to std::string
+                    char camName[MAX_CAM_NAME_LENGTH];
+                    memset(camName, 0, sizeof(camName));
+                    sprintf(camName, "%s", video_cap.card);
+                    deviceList.insert(std::pair<int, std::string>(camIndexInt, camName));
+                }
             }
-        }
-
-        //sort the system devices vector
-        std::sort(sysDeviceNames.begin(), sysDeviceNames.end());
-
-        //then getdevices human readable Names
-        std::vector<std::string>::iterator sysDevicesIterator = sysDeviceNames.begin();
-        while( sysDevicesIterator != sysDeviceNames.end() )
-        {
-            // 256 - its max string size.
-            char buffer[256];
-
-            memset(buffer, 0, sizeof(buffer));
-            sprintf(buffer, "%s%s", "/dev/", (*sysDevicesIterator).c_str());
-            if((fd = open(buffer, O_RDONLY)) == -1)
-            {
-                break;
-            }
-
-            if(ioctl(fd, VIDIOC_QUERYCAP, &video_cap) == -1)
-            {
-                deviceList.push_back("Unknown camera");
-            }
-            else
-            {
-                //i need to convert from addres to string
-                char bufStr[256];
-                memset(bufStr, 0, sizeof(bufStr));
-                sprintf(bufStr, "%s", video_cap.card);
-                deviceList.push_back(bufStr);
-            }
-
-            ++sysDevicesIterator;
         }
     }
 #elif _WIN32
@@ -118,9 +117,11 @@ std::vector<std::string> DeviceManager::GetWebcamList()
         return hr;
     }
 
-    void DeviceManager::DisplayDeviceInformation(IEnumMoniker *pEnum, std::vector<std::string> *deviceList)
+    void DeviceManager::DisplayDeviceInformation(IEnumMoniker *pEnum, std::map<int, std::string> *deviceList)
     {
         IMoniker *pMoniker = NULL;
+        int deviceIndex = 0;
+
 
         while (pEnum->Next(1, &pMoniker, NULL) == S_OK)
         {
@@ -143,11 +144,11 @@ std::vector<std::string> DeviceManager::GetWebcamList()
             }
             if (SUCCEEDED(hr))
             {
-                // 256 - max name length
-                char buf[256];
-                memset(buf, 0, sizeof(buf));
-                sprintf_s(buf, "%S", var.bstrVal);
-                deviceList->push_back(buf);
+                char deviceName[MAX_CAM_NAME_LENGTH];
+                memset(deviceName, 0, sizeof(deviceName));
+                sprintf_s(deviceName, "%S", var.bstrVal);
+                deviceList->insert(std::pair<int, std::string>(deviceIndex, deviceName));
+                deviceIndex++;
                 VariantClear(&var);
             }
 

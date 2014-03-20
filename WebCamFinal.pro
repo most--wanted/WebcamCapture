@@ -29,7 +29,6 @@ unix:!macx: INCLUDEPATH += $$PWD/../opencv-2.4.8/include
 unix:!macx: DEPENDPATH += $$PWD/../opencv-2.4.8/include
 
 # windows includes
-
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../opencv/build/x64/vc12/lib/ -lopencv_core248 \
                                               -L$$PWD/../opencv/build/x64/vc12/lib/ -lopencv_highgui248
 
@@ -38,3 +37,5 @@ else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../opencv/build/x64/vc1
 
 win32: INCLUDEPATH += $$PWD/../opencv/build/include
 win32: DEPENDPATH += $$PWD/../opencv/build/include
+
+#MAC_OS_X

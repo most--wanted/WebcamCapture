@@ -19,20 +19,35 @@ MainWindow::~MainWindow()
 void MainWindow::on_pbUpdate_clicked()
 {
     this->ui->cbDevicesList->clear();
-    std::vector<std::string> deviceList = DeviceManager::GetWebcamList();
-    std::vector<std::string>::iterator deviceIterator = deviceList.begin();
+    this->camIndexesMap_.clear();
 
-    while (deviceIterator != deviceList.end())
+    std::map<int, std::string> deviceList = DeviceManager::GetWebcamList();
+    std::map<int, std::string>::iterator deviceItterator;
+    int cbIndexCounter = 0;
+
+    for (deviceItterator = deviceList.begin(); deviceItterator != deviceList.end(); ++deviceItterator)
     {
-        this->ui->cbDevicesList->addItem((*deviceIterator).c_str());
-        ++deviceIterator;
+        this->ui->cbDevicesList->addItem(deviceItterator->second.c_str());
+
+        //connect comboBox idexes with webcam indexes
+        this->camIndexesMap_.insert(std::pair<int, int>(cbIndexCounter, deviceItterator->first));
+        cbIndexCounter++;
     }
 }
 
 void MainWindow::on_pbCaptureVideo_clicked()
 {
-    // current index of combo box - it is the cam index
-    CvCapture *capture = cvCreateCameraCapture(this->ui->cbDevicesList->currentIndex());
+    if ( this->ui->cbDevicesList->currentIndex() < 0 )
+    {
+        //cam was not selected
+        return;
+    }
+
+    //get current webcam index from MAP
+    std::map<int, int>::iterator it;
+    it = this->camIndexesMap_.find(this->ui->cbDevicesList->currentIndex());
+
+    CvCapture *capture = cvCreateCameraCapture(it->second);
     assert( capture );
 
     IplImage * frame = 0;
