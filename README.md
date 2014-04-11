@@ -7,4 +7,4 @@ Works stable.
 
 To Use it you need the latest openCV(2.4.8) libraries opencv_core and opencv_highgui
 
-The MAC OS X support will be added soon. (in process)
+The MAC OS X support will be added soon. (in process) 
